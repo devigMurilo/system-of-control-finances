@@ -163,6 +163,11 @@ h2 {
   gap: 18px;
 }
 
+.side-column {
+  display: grid;
+  gap: 18px;
+}
+
 .panel {
   overflow: hidden;
 }
@@ -171,9 +176,68 @@ h2 {
   align-items: center;
   border-bottom: 1px solid var(--border);
   display: flex;
+  gap: 12px;
   justify-content: space-between;
   min-height: 52px;
   padding: 0 18px;
+}
+
+.panel-title {
+  align-items: center;
+  display: inline-flex;
+  gap: 8px;
+}
+
+.panel-title svg {
+  color: var(--accent);
+}
+
+.open-finance-body {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+}
+
+.status-pill {
+  border-radius: 999px;
+  background: var(--surface-alt);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 5px 9px;
+}
+
+.status-pill.ready,
+.status-pill.success {
+  background: var(--good-soft);
+  color: var(--good);
+}
+
+.status-pill.error {
+  background: var(--bad-soft);
+  color: var(--bad);
+}
+
+.muted-text {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.inline-alert,
+.inline-success {
+  border-radius: 8px;
+  font-size: 14px;
+  padding: 10px 12px;
+}
+
+.inline-alert {
+  background: var(--bad-soft);
+  color: var(--bad);
+}
+
+.inline-success {
+  background: var(--good-soft);
+  color: var(--good);
 }
 
 .empty-panel {

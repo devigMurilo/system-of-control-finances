@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { getAccounts, getDashboard, getTransactions } from "./api.js";
 import AccountsList from "./components/AccountsList.jsx";
 import CategoryChart from "./components/CategoryChart.jsx";
+import OpenFinanceConnect from "./components/OpenFinanceConnect.jsx";
 import SummaryCard from "./components/SummaryCard.jsx";
 import TransactionsTable from "./components/TransactionsTable.jsx";
 import { formatCurrency } from "./formatters.js";
@@ -89,7 +90,10 @@ export default function App() {
         <section className="panel empty-panel">Carregando dados financeiros...</section>
       ) : (
         <div className="content-grid">
-          <AccountsList accounts={accounts} />
+          <div className="side-column">
+            <OpenFinanceConnect />
+            <AccountsList accounts={accounts} />
+          </div>
           <div className="main-column">
             <CategoryChart categories={dashboard?.expenses_by_category || []} />
             <TransactionsTable transactions={transactions} />

@@ -1,7 +1,13 @@
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
 
-async function request(path) {
-  const response = await fetch(`${API_URL}${path}`);
+async function request(path, options = {}) {
+  const response = await fetch(`${API_URL}${path}`, {
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+    ...options,
+  });
 
   if (!response.ok) {
     throw new Error("Nao foi possivel carregar os dados.");
@@ -20,4 +26,10 @@ export function getAccounts() {
 
 export function getTransactions() {
   return request("/transactions/");
+}
+
+export function createConnectToken() {
+  return request("/connect-token/", {
+    method: "POST",
+  });
 }

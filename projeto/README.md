@@ -30,9 +30,24 @@ A API fica em `http://localhost:8000/api/`.
 Endpoints principais:
 
 - `GET /api/dashboard/`
+- `POST /api/connect-token/`
+- `POST /api/webhooks/pluggy/`
 - `GET /api/accounts/`
 - `GET /api/transactions/`
 - CRUD completo em `/api/accounts/` e `/api/transactions/`
+
+Para gerar tokens do Pluggy Connect, configure `CLIENT_ID` e
+`CLIENT_SECRET` no `.env` do backend e faça um `POST` sem corpo para
+`/api/connect-token/`.
+
+Registre o webhook na Pluggy apontando para:
+
+```text
+https://seu-dominio.com/api/webhooks/pluggy/
+```
+
+O endpoint trata os eventos `item/created`, `item/updated` e `item/error` e
+responde `2xx` imediatamente com `{ "received": true }`.
 
 ## Frontend
 
