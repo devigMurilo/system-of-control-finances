@@ -45,6 +45,22 @@ button:disabled {
   opacity: 0.65;
 }
 
+input {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font: inherit;
+  min-height: 40px;
+  padding: 0 10px;
+  width: 100%;
+}
+
+input:disabled {
+  background: var(--surface-alt);
+  color: var(--muted);
+}
+
 .app-shell {
   margin: 0 auto;
   max-width: 1180px;
@@ -196,6 +212,57 @@ h2 {
   display: grid;
   gap: 12px;
   padding: 18px;
+}
+
+.open-finance-form {
+  display: grid;
+  gap: 12px;
+}
+
+.open-finance-form label,
+.protocol-row {
+  color: var(--muted);
+  display: grid;
+  font-size: 13px;
+  font-weight: 700;
+  gap: 6px;
+}
+
+.date-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 1fr 1fr;
+}
+
+.checkbox-row {
+  align-items: center;
+  color: var(--text);
+  display: flex !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+}
+
+.checkbox-row input {
+  min-height: auto;
+  width: auto;
+}
+
+.protocol-row {
+  align-items: stretch;
+  grid-template-columns: 1fr auto;
+}
+
+.statement-result {
+  background: #101820;
+  border-radius: 8px;
+  color: #edf7f4;
+  font-size: 12px;
+  line-height: 1.45;
+  margin: 0;
+  max-height: 360px;
+  overflow: auto;
+  padding: 12px;
+  white-space: pre-wrap;
 }
 
 .status-pill {

@@ -24,6 +24,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "rest_framework",
     "finances",
+    "openfinance_app",
 ]
 
 MIDDLEWARE = [
@@ -89,3 +90,10 @@ REST_FRAMEWORK = {
     "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
     "DEFAULT_PARSER_CLASSES": ["rest_framework.parsers.JSONParser"],
 }
+
+TECNOSPEED_OPENFINANCE_BASE_URL = os.getenv(
+    "TECNOSPEED_OPENFINANCE_BASE_URL",
+    "https://staging.pagamentobancario.com.br",
+)
+TECNOSPEED_CNPJSH = os.getenv("TECNOSPEED_CNPJSH", "")
+TECNOSPEED_TOKENSH = os.getenv("TECNOSPEED_TOKENSH", "")
