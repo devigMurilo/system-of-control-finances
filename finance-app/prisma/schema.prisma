@@ -1,0 +1,90 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  name         String?
+  passwordHash String
+  links        Link[]
+  categories   Category[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model Institution {
+  id        String   @id @default(cuid())
+  belvoId   String   @unique
+  name      String
+  links     Link[]
+  createdAt DateTime @default(now())
+}
+
+model Link {
+  id            String       @id @default(cuid())
+  belvoLinkId   String       @unique
+  userId        String
+  institutionId String?
+  status        String       @default("active")
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  institution   Institution? @relation(fields: [institutionId], references: [id])
+  accounts      Account[]
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+}
+
+model Account {
+  id             String        @id @default(cuid())
+  belvoAccountId String        @unique
+  linkId         String
+  name           String
+  type           String
+  currency       String        @default("BRL")
+  number         String?
+  link           Link          @relation(fields: [linkId], references: [id], onDelete: Cascade)
+  balances       Balance[]
+  transactions   Transaction[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+}
+
+model Balance {
+  id        String   @id @default(cuid())
+  accountId String
+  current   Decimal  @db.Decimal(14, 2)
+  available Decimal? @db.Decimal(14, 2)
+  date      DateTime @default(now())
+  account   Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+}
+
+model Category {
+  id           String        @id @default(cuid())
+  userId       String
+  name         String
+  emoji        String        @default("💰")
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+
+  @@unique([userId, name])
+}
+
+model Transaction {
+  id                 String    @id @default(cuid())
+  belvoTransactionId String    @unique
+  accountId          String
+  categoryId         String?
+  description        String
+  amount             Decimal   @db.Decimal(14, 2)
+  currency           String    @default("BRL")
+  type               String
+  date               DateTime
+  account            Account   @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  category           Category? @relation(fields: [categoryId], references: [id])
+  createdAt          DateTime  @default(now())
+}
