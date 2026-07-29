@@ -1,5 +1,6 @@
-import { CalendarDays, Landmark, Search } from "lucide-react";
-import { useEffect, useState } from "react";
+import { CalendarDays, Landmark, Search, Unplug } from "lucide-react";
+import { useState } from "react";
+import { PluggyConnect } from "react-pluggy-connect";
 
 import {
   createConnectToken,
@@ -8,9 +9,10 @@ import {
 } from "../api.js";
 
 export default function OpenFinanceConnect() {
+  const [connectStatus, setConnectStatus] = useState("idle");
+  const [connectMessage, setConnectMessage] = useState("");
   const [connectToken, setConnectToken] = useState("");
-  const [status, setStatus] = useState("loading");
-  const [message, setMessage] = useState("");
+  const [pluggyResult, setPluggyResult] = useState(null);
   const [statementStatus, setStatementStatus] = useState("idle");
   const [statementMessage, setStatementMessage] = useState("");
   const [protocol, setProtocol] = useState("");
@@ -23,38 +25,62 @@ export default function OpenFinanceConnect() {
     today: false,
   });
 
-  useEffect(() => {
-    let isMounted = true;
-
-    async function loadConnectToken() {
-      try {
-        const data = await createConnectToken();
-
-        if (isMounted) {
-          setConnectToken(data.accessToken);
-          setStatus("ready");
-        }
-      } catch (err) {
-        if (isMounted) {
-          setStatus("error");
-          setMessage(err.message);
-        }
-      }
-    }
-
-    loadConnectToken();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
   function updateField(event) {
     const { checked, name, type, value } = event.target;
     setForm((current) => ({
       ...current,
       [name]: type === "checkbox" ? checked : value,
     }));
+  }
+
+  async function handleConnectPluggy() {
+    if (!form.payer_cpf_cnpj) {
+      setConnectStatus("error");
+      setConnectMessage("Informe o CPF/CNPJ do pagador primeiro.");
+      return;
+    }
+
+    setConnectStatus("loading");
+    setConnectMessage("");
+    setConnectToken("");
+
+    try {
+      const data = await createConnectToken(form.payer_cpf_cnpj);
+      setConnectToken(data.connectToken);
+      setConnectStatus("open");
+    } catch (err) {
+      setConnectStatus("error");
+      setConnectMessage(err.message);
+    }
+  }
+
+  function handlePluggySuccess(result) {
+    setPluggyResult(result);
+    const itemId = result?.item?.id || result?.id || result?.itemId || "";
+    if (itemId) {
+      setForm((current) => ({ ...current, account_hash: itemId }));
+      setConnectToken("");
+      setConnectStatus("success");
+      setConnectMessage("Conta conectada com sucesso via Pluggy!");
+    } else {
+      setConnectStatus("success");
+      setConnectMessage("Conectado. Retorno: " + JSON.stringify(result));
+    }
+  }
+
+  function handlePluggyError(error) {
+    setPluggyResult(error);
+    setConnectToken("");
+    setConnectStatus("error");
+    setConnectMessage(error.message || "Erro ao conectar conta via Pluggy.");
+  }
+
+  function handlePluggyClose() {
+    setConnectToken("");
+    setPluggyResult(null);
+    if (connectStatus === "open") {
+      setConnectStatus("ready");
+    }
   }
 
   async function handleCreateStatement(event) {
@@ -103,6 +129,29 @@ export default function OpenFinanceConnect() {
     }
   }
 
+  function statusLabel() {
+    switch (connectStatus) {
+      case "open": return "Aberto";
+      case "ready": return "Pronto";
+      case "success": return "Conectado";
+      case "error": return "Erro";
+      case "loading": return "Carregando";
+      default: return "Inativo";
+    }
+  }
+
+  function statusClass() {
+    switch (connectStatus) {
+      case "ready":
+      case "success":
+        return "ready";
+      case "error":
+        return "error";
+      default:
+        return "idle";
+    }
+  }
+
   return (
     <section className="panel open-finance-panel">
       <div className="panel-heading">
@@ -110,20 +159,10 @@ export default function OpenFinanceConnect() {
           <Landmark size={18} />
           <h2>Open Finance</h2>
         </div>
-        <span className={`status-pill ${status}`}>
-          {status === "ready" ? "Pronto" : status === "error" ? "Erro" : "Carregando"}
-        </span>
+        <span className={`status-pill ${statusClass()}`}>{statusLabel()}</span>
       </div>
 
       <div className="open-finance-body">
-        {status === "loading" && <p className="muted-text">Preparando conexao segura...</p>}
-
-        {status === "error" && <div className="inline-alert">{message}</div>}
-
-        {connectToken && <div className="inline-success">Conexao Pluggy preparada.</div>}
-
-        {status === "success" && message && <div className="inline-success">{message}</div>}
-
         <form className="open-finance-form" onSubmit={handleCreateStatement}>
           <label>
             CPF/CNPJ do pagador
@@ -135,6 +174,26 @@ export default function OpenFinanceConnect() {
               value={form.payer_cpf_cnpj}
             />
           </label>
+
+          <button
+            disabled={connectStatus === "loading" || connectStatus === "open"}
+            onClick={handleConnectPluggy}
+            type="button"
+          >
+            <Unplug size={16} />
+            {connectStatus === "loading" ? "Conectando..." : "Conectar conta via Pluggy"}
+          </button>
+
+          {connectToken && (
+            <PluggyConnect
+              connectToken={connectToken}
+              includeSandbox
+              openFinanceParameters={{ cpf: form.payer_cpf_cnpj.length <= 11 ? form.payer_cpf_cnpj : undefined, cnpj: form.payer_cpf_cnpj.length > 11 ? form.payer_cpf_cnpj : undefined }}
+              onSuccess={handlePluggySuccess}
+              onError={handlePluggyError}
+              onClose={handlePluggyClose}
+            />
+          )}
 
           <label>
             Account Hash
@@ -182,6 +241,11 @@ export default function OpenFinanceConnect() {
             {statementStatus === "loading" ? "Solicitando" : "Solicitar extrato"}
           </button>
         </form>
+
+        {connectStatus === "error" && <div className="inline-alert">{connectMessage}</div>}
+        {connectStatus === "success" && <div className="inline-success">{connectMessage}</div>}
+        {(connectStatus === "loading") && <p className="muted-text">Gerando token de conexao...</p>}
+        {pluggyResult && <pre className="statement-result">Pluggy callback: {JSON.stringify(pluggyResult, null, 2)}</pre>}
 
         <div className="protocol-row">
           <input

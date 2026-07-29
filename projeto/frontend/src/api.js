@@ -38,9 +38,11 @@ export function getTransactions() {
   return request("/transactions/");
 }
 
-export function createConnectToken() {
-  return request("/connect-token/", {
+export function createConnectToken(payerCpfCnpj) {
+  return request("/openfinance/pluggy/connect-token/", {
+    baseUrl: API_ROOT_URL,
     method: "POST",
+    body: JSON.stringify({ payer_cpf_cnpj: payerCpfCnpj }),
   });
 }
 
