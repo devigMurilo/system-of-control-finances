@@ -43,16 +43,14 @@ export async function belvoFetch<T>(
   return response.json() as Promise<T>;
 }
 
-export async function createBelvoLink(accessMode = "single") {
-  return belvoFetch<{ id: string; access_mode: string }>("/api/links/", {
+export async function createBelvoAccessToken() {
+  return belvoFetch<{ access: string; refresh: string }>("/api/token/", {
     method: "POST",
-    body: JSON.stringify({ access_mode: accessMode })
+    body: JSON.stringify({
+      id: process.env.BELVO_SECRET_ID,
+      password: process.env.BELVO_SECRET_PASSWORD,
+      scopes: "read_institutions,write_links",
+      fetch_resources: ["ACCOUNTS", "TRANSACTIONS", "OWNERS"]
+    })
   });
-}
-
-export function getBelvoWidgetConfig(linkId: string) {
-  return {
-    callback: `${process.env.NEXT_PUBLIC_APP_URL}/api/belvo/connect`,
-    link: linkId
-  };
 }
