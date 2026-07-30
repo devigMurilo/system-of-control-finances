@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Finance App",
-  description: "Controle financeiro com Next.js, Prisma e Belvo"
+  description: "Controle financeiro com Next.js, Prisma e Pluggy"
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

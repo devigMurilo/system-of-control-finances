@@ -1,96 +1,108 @@
 "use client";
 
 import { Landmark } from "lucide-react";
-import { useState } from "react";
-import Script from "next/script";
+import dynamic from "next/dynamic";
+import { useCallback, useState } from "react";
+import type { PluggyConnect as PluggyConnectType } from "react-pluggy-connect";
+import type { Item } from "pluggy-sdk";
 import { Button } from "@/components/ui/button";
 
-declare global {
-  interface Window {
-    belvoSDK?: {
-      createWidget: (
-        accessToken: string,
-        config: {
-          callback: (link: string, institution: string) => void;
-          onExit?: (data: unknown) => void;
-          onEvent?: (data: unknown) => void;
-        }
-      ) => { build: () => void };
-    };
-  }
-}
+const PluggyConnect = dynamic(
+  () => import("react-pluggy-connect").then((mod) => mod.PluggyConnect),
+  { ssr: false }
+) as typeof PluggyConnectType;
 
 export function ConnectBankButton() {
   const [message, setMessage] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [isScriptReady, setIsScriptReady] = useState(false);
+  const [connectToken, setConnectToken] = useState<string>();
+  const [connecting, setConnecting] = useState(false);
 
-  async function saveBelvoLink(linkId: string, institution: string) {
-    const response = await fetch("/api/belvo/connect", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ linkId, institution })
-    });
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error ?? "Não foi possível salvar o link da Belvo.");
-    }
-  }
-
-  async function connect() {
+  const generateToken = useCallback(async () => {
     setMessage("");
 
-    if (!window.belvoSDK || !isScriptReady) {
-      setMessage("Widget da Belvo ainda está carregando.");
-      return;
-    }
-
-    setIsLoading(true);
     try {
-      const response = await fetch("/api/belvo/token", { method: "POST" });
+      const response = await fetch("/api/pluggy/connect-token", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          webhookUrl: process.env.NEXT_PUBLIC_PLUGGY_WEBHOOK_URL,
+        }),
+      });
+
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error ?? "Não foi possível iniciar a Belvo.");
+        throw new Error(data.error ?? "Erro ao gerar token de conexão");
       }
 
-      window.belvoSDK
-        .createWidget(data.accessToken, {
-          callback: async (link, institution) => {
-            await saveBelvoLink(link, institution);
-            setMessage("Banco conectado com sucesso.");
-          },
-          onExit: () => {
-            setMessage("Conexão cancelada.");
-          },
-          onEvent: (data) => {
-            console.info("Belvo widget event", data);
-          }
-        })
-        .build();
+      setConnectToken(data.accessToken);
+      setConnecting(true);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Erro ao conectar banco.");
-    } finally {
-      setIsLoading(false);
+      setMessage(
+        error instanceof Error ? error.message : "Erro ao conectar banco"
+      );
     }
-  }
+  }, []);
+
+  const onSuccess = useCallback(async (itemData: { item: Item }) => {
+    const itemId = itemData.item.id;
+
+    const response = await fetch("/api/pluggy/items", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        itemId,
+        connectorId: itemData.item.connector?.id,
+      }),
+    });
+
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.error ?? "Erro ao salvar conexão");
+    }
+
+    setMessage("Banco conectado com sucesso.");
+    setConnecting(false);
+    setConnectToken(undefined);
+  }, []);
+
+  const onError = useCallback(
+    (error: { message: string; data?: { item?: Item } }) => {
+      setMessage(error.message || "Erro na conexão bancária.");
+      setConnecting(false);
+      setConnectToken(undefined);
+    },
+    []
+  );
+
+  const onClose = useCallback(() => {
+    setConnecting(false);
+    setConnectToken(undefined);
+  }, []);
 
   return (
     <>
-      <Script
-        src="https://cdn.belvo.io/belvo-widget-1-stable.js"
-        strategy="afterInteractive"
-        onLoad={() => setIsScriptReady(true)}
-      />
-      <div id="belvo" />
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
         {message && <p className="text-sm text-slate-500">{message}</p>}
-        <Button type="button" onClick={connect} disabled={isLoading || !isScriptReady}>
+        <Button
+          type="button"
+          onClick={generateToken}
+          disabled={connecting}
+        >
           <Landmark size={17} />
-          {isLoading ? "Conectando..." : "Conectar banco"}
+          {connecting ? "Conectando..." : "Conectar banco"}
         </Button>
       </div>
+
+      {connecting && connectToken && (
+        <PluggyConnect
+          connectToken={connectToken}
+          includeSandbox
+          onSuccess={onSuccess}
+          onError={onError}
+          onClose={onClose}
+        />
+      )}
     </>
   );
 }

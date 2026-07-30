@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider          = "postgresql"
+  url               = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
 }
 
 model User {
@@ -20,38 +21,36 @@ model User {
 
 model Institution {
   id        String   @id @default(cuid())
-  belvoId   String   @unique
+  pluggyId  Int      @unique
   name      String
-  links     Link[]
   createdAt DateTime @default(now())
 }
 
 model Link {
-  id            String       @id @default(cuid())
-  belvoLinkId   String       @unique
-  userId        String
-  institutionId String?
-  status        String       @default("active")
-  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  institution   Institution? @relation(fields: [institutionId], references: [id])
-  accounts      Account[]
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+  id           String    @id @default(cuid())
+  pluggyItemId String    @unique
+  userId       String
+  connectorId  Int?
+  status       String    @default("active")
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accounts     Account[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 }
 
 model Account {
-  id             String        @id @default(cuid())
-  belvoAccountId String        @unique
-  linkId         String
-  name           String
-  type           String
-  currency       String        @default("BRL")
-  number         String?
-  link           Link          @relation(fields: [linkId], references: [id], onDelete: Cascade)
-  balances       Balance[]
-  transactions   Transaction[]
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  id              String        @id @default(cuid())
+  pluggyAccountId String        @unique
+  linkId          String
+  name            String
+  type            String
+  currency        String        @default("BRL")
+  number          String?
+  link            Link          @relation(fields: [linkId], references: [id], onDelete: Cascade)
+  balances        Balance[]
+  transactions    Transaction[]
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 }
 
 model Balance {
@@ -75,16 +74,16 @@ model Category {
 }
 
 model Transaction {
-  id                 String    @id @default(cuid())
-  belvoTransactionId String    @unique
-  accountId          String
-  categoryId         String?
-  description        String
-  amount             Decimal   @db.Decimal(14, 2)
-  currency           String    @default("BRL")
-  type               String
-  date               DateTime
-  account            Account   @relation(fields: [accountId], references: [id], onDelete: Cascade)
-  category           Category? @relation(fields: [categoryId], references: [id])
-  createdAt          DateTime  @default(now())
+  id                  String    @id @default(cuid())
+  pluggyTransactionId String    @unique
+  accountId           String
+  categoryId          String?
+  description         String
+  amount              Decimal   @db.Decimal(14, 2)
+  currency            String    @default("BRL")
+  type                String
+  date                DateTime
+  account             Account   @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  category            Category? @relation(fields: [categoryId], references: [id])
+  createdAt           DateTime  @default(now())
 }
