@@ -156,9 +156,9 @@ async function syncTransactions(accountId: string) {
   if (!userId) return;
 
   try {
-    const pluggyTxns = await pluggyClient.fetchTransactions(accountId);
+    const pluggyTxns = await pluggyClient.fetchAllTransactions(accountId);
 
-    for (const txn of pluggyTxns.results ?? []) {
+    for (const txn of pluggyTxns ?? []) {
       const category = txn.category
         ? await prisma.category.upsert({
             where: { userId_name: { userId, name: txn.category } },

@@ -3,6 +3,7 @@
 import { Landmark } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useCallback, useState } from "react";
+import { useRouter } from "next/navigation";
 import type { PluggyConnect as PluggyConnectType } from "react-pluggy-connect";
 import type { Item } from "pluggy-sdk";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,7 @@ const PluggyConnect = dynamic(
 ) as typeof PluggyConnectType;
 
 export function ConnectBankButton() {
+  const router = useRouter();
   const [message, setMessage] = useState("");
   const [connectToken, setConnectToken] = useState<string>();
   const [connecting, setConnecting] = useState(false);
@@ -64,7 +66,8 @@ export function ConnectBankButton() {
     setMessage("Banco conectado com sucesso.");
     setConnecting(false);
     setConnectToken(undefined);
-  }, []);
+    router.refresh();
+  }, [router]);
 
   const onError = useCallback(
     (error: { message: string; data?: { item?: Item } }) => {

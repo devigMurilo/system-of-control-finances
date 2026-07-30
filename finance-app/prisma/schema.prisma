@@ -3,54 +3,53 @@ generator client {
 }
 
 datasource db {
-  provider          = "postgresql"
-  url               = env("DATABASE_URL")
-  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
-  id           String        @id @default(cuid())
-  email        String        @unique
+  id           String     @id @default(cuid())
+  email        String     @unique
   name         String?
   passwordHash String
-  links        Link[]
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
   categories   Category[]
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  links        Link[]
 }
 
 model Institution {
   id        String   @id @default(cuid())
-  pluggyId  Int      @unique
   name      String
   createdAt DateTime @default(now())
+  pluggyId  Int      @unique
 }
 
 model Link {
   id           String    @id @default(cuid())
-  pluggyItemId String    @unique
   userId       String
-  connectorId  Int?
   status       String    @default("active")
-  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  accounts     Account[]
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
+  connectorId  Int?
+  pluggyItemId String    @unique
+  accounts     Account[]
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Account {
   id              String        @id @default(cuid())
-  pluggyAccountId String        @unique
   linkId          String
   name            String
   type            String
   currency        String        @default("BRL")
   number          String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  pluggyAccountId String        @unique
   link            Link          @relation(fields: [linkId], references: [id], onDelete: Cascade)
   balances        Balance[]
   transactions    Transaction[]
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
 }
 
 model Balance {
@@ -75,7 +74,6 @@ model Category {
 
 model Transaction {
   id                  String    @id @default(cuid())
-  pluggyTransactionId String    @unique
   accountId           String
   categoryId          String?
   description         String
@@ -83,7 +81,8 @@ model Transaction {
   currency            String    @default("BRL")
   type                String
   date                DateTime
+  createdAt           DateTime  @default(now())
+  pluggyTransactionId String    @unique
   account             Account   @relation(fields: [accountId], references: [id], onDelete: Cascade)
   category            Category? @relation(fields: [categoryId], references: [id])
-  createdAt           DateTime  @default(now())
 }
